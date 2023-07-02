@@ -1,10 +1,11 @@
 SET(PROJECT_NAME vikit_common)
 PROJECT(${PROJECT_NAME})
-CMAKE_MINIMUM_REQUIRED (VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.11.4)
 SET(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/")
 SET(USE_ROS TRUE) # Set False if you want to build this package without Catkin
+
+add_compile_options("-Wno-int-in-bool-context")
 
 # Set build flags. Set IS_ARM on odroid board as environment variable
 SET(CMAKE_CXX_FLAGS "-Wall -D_LINUX -D_REENTRANT -march=native -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unknown-pragmas")
@@ -22,22 +23,24 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -fsee -fomit-frame-pointer -
 
 # Add plain cmake packages 
 FIND_PACKAGE(OpenCV REQUIRED)
-FIND_PACKAGE(Eigen REQUIRED)
-FIND_PACKAGE(Sophus REQUIRED)
 
 # Include dirs
 INCLUDE_DIRECTORIES(
   include
-  ${Eigen_INCLUDE_DIRS}
+  ${eigen_INCLUDE_DIR}
+  ${sophus_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
-  ${Sophus_INCLUDE_DIRS}
 )
 
+message("DEBUG: eigen_INCLUDE_DIR: ${eigen_INCLUDE_DIR}")
+message("DEBUG: eigen_cmake: ${eigen_cmake}")
+
 IF(USE_ROS)
+  message("DEBUG: Use ROS: ${USE_ROS}")
   FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp cmake_modules)
   LIST(APPEND INCLUDE_DIRECTORIES ${catkin_INCLUDE_DIRS})
   catkin_package(
-    DEPENDS Eigen OpenCV Sophus
+    DEPENDS OpenCV
     CATKIN_DEPENDS roscpp
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
@@ -61,10 +64,14 @@ LIST(APPEND SOURCEFILES src/atan_camera.cpp
 
 # Create vikit library
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCEFILES})
+add_dependencies(${PROJECT_NAME} sophus eigen)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   ${OpenCV_LIBS}
-  ${Sophus_LIBRARIES}
+  ${sophus_LIBS}
   ${catkin_LIBRARIES})
+
+message("DEBUG: path to Sophus: ${sophus_LIBS}")
+message("DEBUG: path to catkin libs: ${catkin_LIBRARIES}")
 
 IF(USE_ROS)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${catkin_LIBRARIES})
