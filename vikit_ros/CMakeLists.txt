@@ -2,6 +2,7 @@ SET(PROJECT_NAME vikit_ros)
 PROJECT(${PROJECT_NAME})
 cmake_minimum_required(VERSION 3.11.4)
 SET(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/../cmake_modules/")
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
 add_compile_options("-Wno-int-in-bool-context")
@@ -15,28 +16,26 @@ ELSE()
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF()
 
-message("DEBUG: CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
-message("DEBUG: CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
-message("DEBUG: CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
-
 # Add catkin and required ROS packages
 FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp vikit_common visualization_msgs tf cmake_modules)
 
 # Add plain cmake packages 
 FIND_PACKAGE(OpenCV REQUIRED)
+FIND_PACKAGE(Eigen REQUIRED)
+FIND_PACKAGE(Sophus REQUIRED)
 
 # Include dirs
 INCLUDE_DIRECTORIES(
   include
-  ${eigen_INCLUDE_DIR}
+  ${Eigen_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${sophus_INCLUDE_DIR}
+  ${Sophus_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 # Describe catkin Project
 catkin_package(
-    DEPENDS OpenCV vikit_common
+    DEPENDS Eigen OpenCV Sophus vikit_common
     CATKIN_DEPENDS roscpp visualization_msgs tf 
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
@@ -49,9 +48,8 @@ LIST(APPEND SOURCEFILES
 
 # Create vikit library
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCEFILES})
-add_dependencies(${PROJECT_NAME} sophus eigen)
 TARGET_LINK_LIBRARIES(
   ${PROJECT_NAME}
   ${OpenCV_LIBS}
-  ${sophus_LIBS}
+  ${Sophus_LIBRARIES}
   ${catkin_LIBRARIES})
